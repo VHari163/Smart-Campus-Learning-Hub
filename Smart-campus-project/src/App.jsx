@@ -53,12 +53,61 @@ const QUOTES = [
 ]
 
 export default function App() {
+  const seededNotes = useMemo(() => {
+    const now = new Date().toISOString()
+    return [
+      {
+        id: 'seed-chem-101',
+        title: 'Chemistry - Reaction Basics',
+        subject: 'Chemistry',
+        description:
+          'A quick starting pack for reaction basics. Add your own PDF when ready.\n\n' +
+          'Theory: Reactions proceed according to conservation of atoms and energy principles. ' +
+          'Focus on identifying reactants/products, balancing equations, and learning common reaction patterns ' +
+          '(acid-base, redox, substitution). After reading the concepts, reinforce understanding by writing ' +
+          'balanced equations and solving practice problems.',
+        exText: 'EX: Rewrite 10 reactions from this topic, then do 15 practice problems.',
+        pdfDataUrl: '',
+        fileName: '',
+        createdAt: now,
+      },
+      {
+        id: 'seed-math-101',
+        title: 'Mathematics - Limits Starter',
+        subject: 'Mathematics',
+        description:
+          'Begin with limit concepts and common problem patterns.\n\n' +
+          'Theory: Limits describe the value a function approaches as the input gets close to a point. ' +
+          'Learn direct substitution, algebraic simplification, and when to use techniques like factoring, ' +
+          'rationalization, standard limit identities, and L’Hôpital’s rule (where applicable). Master solving ' +
+          'step-by-step by checking indeterminate forms and interpreting the graph/behavior near the point.',
+        exText: 'EX: Watch/skim your notes, then solve: 5 direct limits + 5 indeterminate forms.',
+        pdfDataUrl: '',
+        fileName: '',
+        createdAt: now,
+      },
+      {
+        id: 'seed-phy-101',
+        title: 'Physics - Motion Formula Sheet',
+        subject: 'Physics',
+        description:
+          'A formula-focused reminder pack. Upload PDFs to replace these placeholders.\n\n' +
+          'Theory: Motion in 1D is governed by kinematics equations relating displacement, velocity, acceleration, ' +
+          'and time. Identify what quantities are given, choose the correct equation (or combination), maintain sign ' +
+          'conventions, and apply units consistently. For each problem, draw/label the situation, decide whether ' +
+          'acceleration is constant, and verify the result for reasonableness.',
+        exText: 'EX: Make 1-page summary + solve 12 numericals using the equations of motion.',
+        pdfDataUrl: '',
+        fileName: '',
+        createdAt: now,
+      },
+    ]
+  }, [])
+
   const [theme, setTheme] = useState(() => {
     const stored = localStorage.getItem(LS.theme)
     if (stored === 'dark' || stored === 'light') return stored
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light'
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   })
 
   const [auth, setAuth] = useState(() => {
@@ -72,18 +121,69 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false)
 
   const [notes, setNotes] = useState(() => safeParse(localStorage.getItem(LS.notes), []))
-  const [videos, setVideos] = useState(() =>
-    safeParse(localStorage.getItem(LS.videos), []),
-  )
+  const seededVideos = useMemo(() => {
+    const now = new Date().toISOString()
+    const videos = [
+      {
+        id: 'seed-video-1',
+        title: 'Video 1',
+        subject: 'General',
+        url: 'https://youtu.be/d530rd7m_1E?si=HcoUqH9L962CHl-1',
+        exText: '',
+        createdAt: now,
+      },
+      {
+        id: 'seed-video-2',
+        title: 'Video 2',
+        subject: 'General',
+        url: 'https://youtu.be/wjFgd8JJ8NM?si=i78bWVq7eX7BhVik',
+        exText: '',
+        createdAt: now,
+      },
+      {
+        id: 'seed-video-3',
+        title: 'Video 3',
+        subject: 'General',
+        url: 'https://youtu.be/dIoSEswZNPk?si=byrtOzq5wU8Wxm2k',
+        exText: '',
+        createdAt: now,
+      },
+    ]
+
+    // Add precomputed embed field for the existing Videos component.
+    // (Videos.jsx can still extract embed from url at runtime if embed is missing.)
+    return videos.map((v) => {
+      try {
+        const u = new URL(v.url)
+        const host = u.hostname.replace('www.', '')
+        let id = ''
+        if (host === 'youtu.be') {
+          id = u.pathname.split('/').filter(Boolean)[0] || ''
+        } else if (host.endsWith('youtube.com')) {
+          id = u.searchParams.get('v') || ''
+          if (!id && u.pathname.startsWith('/embed/')) {
+            id = u.pathname.split('/embed/')[1]?.split('/')[0] || ''
+          }
+          if (!id && u.pathname.startsWith('/shorts/')) {
+            id = u.pathname.split('/shorts/')[1]?.split('/')[0] || ''
+          }
+        }
+        return { ...v, embed: id ? `https://www.youtube.com/embed/${id}` : '' }
+      } catch {
+        return { ...v, embed: '' }
+      }
+    })
+  }, [])
+
+  const [videos, setVideos] = useState(() => safeParse(localStorage.getItem(LS.videos), []))
+
   const [tasks, setTasks] = useState(() => safeParse(localStorage.getItem(LS.tasks), []))
   const [exam, setExam] = useState(() => safeParse(localStorage.getItem(LS.exam), null))
-  const [attendance, setAttendance] = useState(() =>
-    safeParse(localStorage.getItem(LS.attendance), null),
+  const [attendance, setAttendance] = useState(() => safeParse(localStorage.getItem(LS.attendance), null))
+  const [activity, setActivity] = useState(() => safeParse(localStorage.getItem(LS.activity), []))
+  const [streak, setStreak] = useState(() =>
+    safeParse(localStorage.getItem(LS.streak), { lastCompletedDayISO: null, count: 0 }),
   )
-  const [activity, setActivity] = useState(() =>
-    safeParse(localStorage.getItem(LS.activity), []),
-  )
-  const [streak, setStreak] = useState(() => safeParse(localStorage.getItem(LS.streak), { lastCompletedDayISO: null, count: 0 }))
 
   useEffect(() => {
     localStorage.setItem(LS.theme, theme)
@@ -93,6 +193,22 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(LS.auth, JSON.stringify(auth))
   }, [auth])
+
+  // Seed once (only if empty), then localStorage persistence runs normally.
+  useEffect(() => {
+    const existingNotes = safeParse(localStorage.getItem(LS.notes), [])
+    if (Array.isArray(existingNotes) && existingNotes.length === 0) {
+      setNotes(seededNotes)
+    }
+
+    const existingVideos = safeParse(localStorage.getItem(LS.videos), [])
+    if (Array.isArray(existingVideos) && existingVideos.length === 0) {
+      setVideos(seededVideos)
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
 
   useEffect(() => {
     localStorage.setItem(LS.notes, JSON.stringify(notes))
@@ -133,7 +249,6 @@ export default function App() {
     setActivity((prev) => [entry, ...prev].slice(0, 12))
   }
 
-  // Update streak when tasks completed for "today"
   useEffect(() => {
     const today = dayISO()
     const completedToday = tasks.some((t) => t.completed && t.dayISO === today)
@@ -172,7 +287,11 @@ export default function App() {
       return hay.includes(q)
     })
 
-    return { notes: matchedNotes.slice(0, 5), videos: matchedVideos.slice(0, 5), tasks: matchedTasks.slice(0, 5) }
+    return {
+      notes: matchedNotes.slice(0, 5),
+      videos: matchedVideos.slice(0, 5),
+      tasks: matchedTasks.slice(0, 5),
+    }
   }, [globalSearch, notes, videos, tasks])
 
   function handleLogout() {
@@ -233,19 +352,11 @@ export default function App() {
         />
 
         {activePage === 'notes' && (
-          <Notes
-            notes={notes}
-            setNotes={setNotes}
-            onAddActivity={(t) => pushActivity(t)}
-          />
+          <Notes notes={notes} setNotes={setNotes} onAddActivity={(t) => pushActivity(t)} />
         )}
 
         {activePage === 'videos' && (
-          <Videos
-            videos={videos}
-            setVideos={setVideos}
-            onAddActivity={(t) => pushActivity(t)}
-          />
+          <Videos videos={videos} setVideos={setVideos} onAddActivity={(t) => pushActivity(t)} />
         )}
 
         {activePage === 'attendance' && (
@@ -261,13 +372,10 @@ export default function App() {
         )}
 
         {activePage === 'planner' && (
-          <StudyPlanner
-            tasks={tasks}
-            setTasks={setTasks}
-            onAddActivity={(t) => pushActivity(t)}
-          />
+          <StudyPlanner tasks={tasks} setTasks={setTasks} onAddActivity={(t) => pushActivity(t)} />
         )}
       </main>
     </div>
   )
 }
+

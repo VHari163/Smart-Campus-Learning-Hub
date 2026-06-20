@@ -97,6 +97,21 @@ export default function Notes({ notes, setNotes, onAddActivity }) {
     a.remove()
   }
 
+  const quickTemplates = useMemo(() => {
+    return [
+      { subject: 'Chemistry', title: 'Reaction Basics', hint: 'EX after you upload your PDF' },
+      { subject: 'Mathematics', title: 'Limits Starter', hint: 'Practice sets for limits' },
+      { subject: 'Physics', title: 'Motion Formula Sheet', hint: 'Summary + numericals' },
+    ]
+  }, [])
+
+  function applyQuickFilter(subjectName) {
+    setSearchSubject(subjectName)
+    const el = document.querySelector('.list')
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+
   return (
     <section className="page">
       <div className="pageHead">
@@ -190,6 +205,27 @@ export default function Notes({ notes, setNotes, onAddActivity }) {
             ) : null}
           </div>
 
+          <div className="glass" style={{ padding: 12, marginTop: 10 }}>
+            <div className="sectionTitle" style={{ fontSize: 14 }}>
+              Quick templates
+            </div>
+            <div className="sectionHint" style={{ marginTop: 6 }}>
+              One-click subject filters (fast start)
+            </div>
+            <div className="chipsRow" style={{ marginTop: 10 }} aria-label="Quick templates">
+              {quickTemplates.map((t) => (
+                <button
+                  key={t.subject}
+                  type="button"
+                  className={`chip ${searchSubject.toLowerCase() === t.subject.toLowerCase() ? 'chipActive' : ''}`}
+                  onClick={() => applyQuickFilter(t.subject)}
+                >
+                  {t.subject}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {subjects.length ? (
             <div className="chipsRow" aria-label="Subject filters">
               {subjects.slice(0, 8).map((s) => (
@@ -204,6 +240,7 @@ export default function Notes({ notes, setNotes, onAddActivity }) {
               ))}
             </div>
           ) : null}
+
 
           <div className="list">
             {filteredNotes.length ? (
@@ -245,9 +282,16 @@ export default function Notes({ notes, setNotes, onAddActivity }) {
                     </div>
                   </div>
                   <div className="listRowActions">
-                    <button className="secondaryBtn" type="button" onClick={() => downloadNote(n)}>
-                      Download
-                    </button>
+                      <button
+                        className="secondaryBtn"
+                        type="button"
+                        onClick={() => downloadNote(n)}
+                        disabled={!n?.pdfDataUrl}
+                        title={!n?.pdfDataUrl ? 'Upload a PDF to enable download' : 'Download PDF'}
+                      >
+                        Download
+                      </button>
+
                   </div>
                 </div>
               ))
